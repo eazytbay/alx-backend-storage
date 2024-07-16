@@ -10,30 +10,28 @@ one line with method=GET, path=/status
 from pymongo import MongoClient
 
 
-METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+def print_nginx_stat():
+    """Prints some stats about Nginx stored in MongoDB"""
+    client = MongoClient()
+    db = client.logs
+    nginx = db.nginx
+
+    print('{} logs'.format(nginx.count_documents({})))
+    print('Methods:')
 
 
-def log_stats(mongo_collection, option=None):
-    """
-    Prototype: def log_stats(mongo_collection, option=None):
-    This Provides some stats about Nginx logs stored in MongoDB
-    """
-    x = {}
-    if option:
-        value = mongo_collection.count_documents(
-            {"method": {"$regex": option}})
-        print(f"\tmethod {option}: {value}")
-        return
+    methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+    for method in methods:
+        method_count = nginx.count_documents({ 'method': method })
+        print('\tmethod {}: {}'.format(method, method_count))
 
-    result = mongo_collection.count_documents(x)
-    print(f"{result} logs")
-    print("Methods:")
-    for method in METHODS:
-        log_stats(nginx_collection, method)
-    status_check = mongo_collection.count_documents({"path": "/status"})
-    print(f"{status_check} status check")
+    print('{} status check'.format(nginx.count_documents(
+        {
+            'method': 'GET',
+            'path': '/status'
+        }
+    )))
 
 
-if __name__ == "__main__":
-    nginx_collection = MongoClient('mongodb://127.0.0.1:27017').logs.nginx
-    log_stats(nginx_collection)
+if __name__ == '__main__':
+    print_nginx_stat()

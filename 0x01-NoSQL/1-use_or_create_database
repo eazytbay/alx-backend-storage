@@ -1,0 +1,2 @@
+// This script uses an existing db or creates a new one called my_db
+use my_db

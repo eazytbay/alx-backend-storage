@@ -9,29 +9,30 @@ one line with method=GET, path=/status
 """
 from pymongo import MongoClient
 
+def print_nginx_request_logs(nginx_collection):
+    """Shows some stats about Nginx logs stored in MongoDB.
 
-def print_nginx_stat():
-    """Prints some stats about Nginx stored in MongoDB"""
-    client = MongoClient()
-    db = client.logs
-    nginx = db.nginx
-
-    print('{} logs'.format(nginx.count_documents({})))
+    Args:
+        nginx_collection (pymongo.collection.Collection): collection to analyze
+    """
+    print('{} logs'.format(nginx_collection.count_documents({})))
     print('Methods:')
-
-
     methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
     for method in methods:
-        method_count = nginx.count_documents({ 'method': method })
-        print('\tmethod {}: {}'.format(method, method_count))
+        cnt = len(list(nginx_collection.find({'method': method})))
+        print('\tmethod {}: {}'.format(method,cnt))
+    confirm_checks_count = len(list(
+        nginx_collection.find({'method': 'GET', 'path': '/status'})
+    ))
+    print('{} status check'.format(confirm_checks_count))
 
-    print('{} status check'.format(nginx.count_documents(
-        {
-            'method': 'GET',
-            'path': '/status'
-        }
-    )))
+
+def run():
+    """shows some stats about Nginx logs stored in MongoDB.
+    """
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    print_nginx_request_logs(client.logs.nginx)
 
 
 if __name__ == '__main__':
-    print_nginx_stat()
+    run()

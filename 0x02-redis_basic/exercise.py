@@ -38,7 +38,7 @@ def replay(fn: Callable):
     func_name = fn.__qualname__
     y = x.get(func_name)
     try:
-        y = int(c.decode("utf-8"))
+        y = int(y.decode("utf-8"))
     except Exception:
         y = 0
     print("{} was called {} times:".format(func_name, y))
@@ -67,9 +67,9 @@ class Cache:
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         '''This function collects data argument and returns a string'''
-        rkey = str(uuid4())
-        self._redis.set(rkey, data)
-        return rkey
+        xkey = str(uuid4())
+        self._redis.set(xkey, data)
+        return xkey
 
     def get(self, key: str,
             fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:

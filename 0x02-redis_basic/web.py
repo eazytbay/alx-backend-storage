@@ -3,54 +3,34 @@
 Implementing a get_page function for web cache and tracker
 """
 import requests
-import time
+import redis
 from functools import wraps
 
-CACHE_EXPIRATION_TIME = 10  # seconds
-CACHE = {}
+store = redis.Redis()
 
 
-def cache(fn):
-    """_summary_
+def count_url_access(method):
+    """ count function that counts how many times
+    a URL is accessed """
+    @wraps(method)
+    def wrapper(url):
+        cached_key = "cached:" + url
+        cached_data = store.get(cached_key)
+        if cached_data:
+            return cached_data.decode("utf-8")
 
-    Args:
-        fn (function): _description_
+        count_key = "count:" + url
+        html = method(url)
 
-    Returns:
-        _type_: _description_
-    """
-    @wraps(fn)
-    def wrapped(*args, **kwargs):
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
-        url = args[0]
-        if url in CACHE and CACHE[url]["timestamp"] + CACHE_EXPIRATION_TIME > \
-                time.time():
-            CACHE[url]["count"] += 1
-            return CACHE[url]["content"]
-        else:
-            content = fn(*args, **kwargs)
-            CACHE[url] = {"content": content,
-                          "timestamp": time.time(), "count": 1}
-            return content
-    return wrapped
+        store.incr(count_key)
+        store.set(cached_key, html)
+        store.expire(cached_key, 10)
+        return html
+    return wrapper
 
 
-@cache
+@count_url_access
 def get_page(url: str) -> str:
-    """_summary_
-
-    Args:
-        url (str): _description_
-
-    Returns:
-        str: _description_
-    """
-    global cnt
-    # increment count
-    cnt += 1
-    response = requests.get(url)
-    return response.content.decode('utf-8')
+    """ Returns HTML content of a url """
+    res = requests.get(url)
+    return res.text

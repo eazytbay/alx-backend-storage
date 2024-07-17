@@ -67,9 +67,9 @@ class Cache:
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         '''This function collects data argument and returns a string'''
-        xkey = str(uuid4())
-        self._redis.set(xkey, data)
-        return xkey
+        rkey = str(uuid4())
+        self._redis.set(rkey, data)
+        return rkey
 
     def get(self, key: str,
             fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
